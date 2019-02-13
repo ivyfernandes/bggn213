@@ -2,6 +2,7 @@
 #' title: "BGGN 213 Class 05"
 #' author: "Ivy Fernandes"
 #' date: "January 25, 2019"
+#' output: github_document
 #' ---
 #' Class 05 graphics and plots with R
 #' 
