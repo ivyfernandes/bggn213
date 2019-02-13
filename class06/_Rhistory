@@ -1,0 +1,149 @@
+knitr::opts_chunk$set(echo = TRUE)
+summary(cars)
+?data input
+?read.table
+read.csv()
+read.csv
+read.table("https://bioboot.github.io/bggn213_S18/class-material/test1.txt")
+read.table("https://bioboot.github.io/bggn213_S18/class-material/test1.txt", header=TRUE, sep=",")
+file<-"https://bioboot.github.io/bggn213_S18/class-material/test1.txt"
+read.csv(file1)
+file1<-"https://bioboot.github.io/bggn213_S18/class-material/test1.txt"
+read.csv(file1)
+file2<-"https://bioboot.github.io/bggn213_S18/class-material/test2.txt"
+read.csv(file2)
+file2<-"https://bioboot.github.io/bggn213_S18/class-material/test2.txt"
+read.table(file2)
+file2<-"https://bioboot.github.io/bggn213_S18/class-material/test2.txt"
+read.table(file2, header=TRUE,sep='$')
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+read.csv(file3)
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+read.table(file3)
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+data3=read.table(file3)
+data3[,1]
+data3[1,1]
+data3[1,]
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+data3=read.table(file3)
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+data3=read.table(file3)
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+data3=read.table(file3)
+data3
+data3[,2]
+data3[,3]
+data3[2,]
+data()
+data3
+add<-function(x,y=1){
+#sum x and y
+x+y
+}
+add(1)
+add(1)
+add(1,5) # will replace the y=1 with 5 because you have included an argument
+add(c(1,2,3,4)) #will add 1 to all of these numbers within the vector
+add(c(1,2,3,4),4)
+rescale<-function(x){
+rng<-range(x)
+(x-rng[1]/(rng[2]-rng[1]))
+}
+rescale(1:10)
+rescale(2:20)
+rescale(1:10)
+rescale(5:10)
+rescale(1:10)
+rescale(5:10)
+rescale(11:15)
+rescale(c(1,2,NA,3,10)) #missing data point, what WOULD you want your function to do if you have data missing?
+range(rescale(1:10))
+range(c(1,2,NA,3,10))
+rescale2<-function(x){
+rng<-range(x,narm=TRUE)
+(x-rng[1]/(rng[2]-rng[1]))
+}
+rescale2(c(1,2,NA,3,10))
+rescale2<-function(x){
+rng<-range(x,na.rm=TRUE)
+(x-rng[1]/(rng[2]-rng[1]))
+}
+rescale2(c(1,2,NA,3,10))
+rescale2(c(1,2,NA,3,10,"bggn213"))
+rescale3 <- function(x, na.rm=TRUE, plot=FALSE) {
+if(na.rm) {
+rng <-range(x, na.rm=na.rm)
+} else {
+rng <-range(x)
+}
+print("Hello")
+answer <- (x - rng[1]) / (rng[2] - rng[1])
+print("is it me you are looking for?")
+if(plot) {
+plot(answer, typ="b", lwd=4)
+}
+print("I can see it in ...")
+}
+rescale3 <- function(x, na.rm=TRUE, plot=FALSE) {
+if(na.rm) {
+rng <-range(x, na.rm=na.rm)
+} else {
+rng <-range(x)
+}
+print("Hello")
+answer <- (x - rng[1]) / (rng[2] - rng[1])
+print("is it me you are looking for?")
+if(plot) {
+plot(answer, typ="b", lwd=4)
+}
+print("I can see it in ...")
+}
+rescale3 <- function(x, na.rm=TRUE, plot=FALSE) {
+if(na.rm) {
+rng <-range(x, na.rm=na.rm)
+} else {
+rng <-range(x)
+}
+print("Hello")
+answer <- (x - rng[1]) / (rng[2] - rng[1])
+print("is it me you are looking for?")
+if(plot) {
+plot(answer, typ="b", lwd=4)
+print("please don't ever sing again")
+}
+print("I can see it in ...")
+}
+rescale3(1:10)
+rescale3(1:10,plot=TRUE)
+rescale(1:10,plot=FALSE)
+install.packages("bio3d")
+library(bio3d)
+pdb<- read.pdb("1hbs") #accession code
+pdb
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")

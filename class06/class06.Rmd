@@ -1,0 +1,172 @@
+---
+title: "Class 06"
+author: "Ivy Fernandes"
+date: "January 25, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## File Reading Again
+here we try to use ** read.table()** and friends
+
+utilizing the insert button to insert code chunks -- going to insert {r} code
+can put a url into the read.table function 
+```{r}
+read.table("https://bioboot.github.io/bggn213_S18/class-material/test1.txt", header=TRUE, sep=",")
+```
+shortcut to get a new code chunk is ctrl+alt+i
+```{r}
+file1<-"https://bioboot.github.io/bggn213_S18/class-material/test1.txt"
+read.csv(file1)
+
+```
+```{r}
+file2<-"https://bioboot.github.io/bggn213_S18/class-material/test2.txt"
+read.table(file2, header=TRUE,sep='$')
+```
+
+```{r}
+file3<-"https://bioboot.github.io/bggn213_S18/class-material/test3.txt"
+data3=read.table(file3)
+data3
+```
+
+## Now we will start working with functions
+Creating the first function
+```{r}
+add<-function(x,y=1){
+  #sum x and y
+  x+y
+}
+```
+
+time to use the **add()** function
+```{r}
+add(1)
+add(1,5) # will replace the y=1 with 5 because you have included an argument
+add(c(1,2,3,4)) #will add 1 to all of these numbers within the vector
+add(c(1,2,3,4),4)
+# add(1,2,2) will not work because there are too many arguments
+# add(x=1,y="b") will not work because there is a non-numeric value
+```
+
+Create a second function
+```{r}
+rescale<-function(x){
+rng<-range(x)
+(x-rng[1]/(rng[2]-rng[1]))
+}
+```
+testing the second function
+```{r}
+rescale(1:10)
+rescale(5:10)
+rescale(11:15)
+```
+
+Test the function until it fails
+```{r}
+rescale(c(1,2,NA,3,10)) #missing data point, what WOULD you want your function to do if you have data missing?
+```
+Testing the function to determine the errors
+```{r}
+range(c(1,2,NA,3,10))
+```
+Look at range function to figure out if we can work around giving NA and working with functions that do exist
+Identified argument within function that ignores missing values na.rm=FALSE should be changed to TRUE
+Edit original function so that it will work
+
+```{r}
+rescale2<-function(x){
+rng<-range(x,na.rm=TRUE)
+(x-rng[1]/(rng[2]-rng[1]))
+}
+```
+
+Test editted functions
+```{r}
+rescale2(c(1,2,NA,3,10))
+```
+Trying to use non-numeric will result in an error
+```{r}
+# rescale(c(1,2,NA,3,10,"bggn213")) can potentially incorporate warnings that there are non-numerics 
+```
+
+How to print lines out in code-- use PRINT FUNCTION
+```{r}
+rescale3 <- function(x, na.rm=TRUE, plot=FALSE) {
+ if(na.rm) {
+ rng <-range(x, na.rm=na.rm)
+ } else {
+ rng <-range(x)
+ }
+ print("Hello")
+ answer <- (x - rng[1]) / (rng[2] - rng[1])
+ print("is it me you are looking for?")
+ if(plot) {
+ plot(answer, typ="b", lwd=4)
+   print("please don't ever sing again") # how come if plot=TRUE does it decide not to print this, why doesn't it do both
+ }
+ print("I can see it in ...")
+}
+```
+
+```{r}
+rescale3(1:10)
+rescale3(1:10,plot=TRUE)
+```
+```{r}
+# rescale(1:10,plot=FALSE)
+```
+
+#Hands-on Worksheet
+
+Using the bio3d package
+```{r}
+library(bio3d)
+```
+
+```{r}
+pdb<- read.pdb("1hbs") #accession code 
+```
+
+```{r}
+pdb
+```
+copy paste code from document
+```{r}
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+```
+
+first and third plots are the same -- looking at the code, the inputs are wrong and s1 is used twice 
+
+```{r}
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+```
+
