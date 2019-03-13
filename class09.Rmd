@@ -1,0 +1,258 @@
+---
+title: 'Class 09: Unsupervised Learning Analysis of Human Breast Cancer Cells'
+author: "Ivy Fernandes"
+date: "2/8/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Exploratory Data Analysis
+```{r}
+wisc.df<-read.csv("WisconsinCancer.csv")
+```
+Viewed the file to make sure everything was imported correctly
+```{r}
+fna.data<-read.csv("WisconsinCancer.csv")
+```
+There is a funny last column labeled "X" filled with NA
+
+Checking the amount of patients
+```{r}
+nrow(fna.data)
+```
+
+Figure out how many factors / columns
+```{r}
+ncol(fna.data)
+```
+
+Because we will not be using the ID and the diagnosis columns that much and because we don't want the weird column at the end, want to save only the data from columns 3 to 32 into a matrix
+```{r}
+wisc.data<-as.matrix(fna.data[,3:32])
+head(wisc.data)
+```
+
+we don't want to use the id in the MODEL, but we can set the row names to be the ID number
+```{r}
+rownames(wisc.data)<-wisc.df$id
+head(wisc.data)
+```
+
+want to figure out how many patients have cancer / no cancer (malignant vs benign)
+```{r}
+table(wisc.df$diagnosis)
+```
+
+want to figure out how many features are "mean" values
+```{r}
+colnames(wisc.data)
+length(grep("mean", colnames(wisc.data) , ignore.case=TRUE,fixed=FALSE))
+
+```
+
+```{r}
+inds<-grep("_mean",colnames(wisc.data)) #stores the positions of the means into a vector
+colnames(wisc.data)[inds] #grabs the exact column names using the positions stored in inds
+```
+
+Setup a separate new vector called diagnosis to be 1 if a diagnosis is malignant ("M") and 0 otherwise. Note that R coerces TRUE to 1 and FALSE to 0.
+```{r}
+
+```
+
+
+
+
+### Principal Component Analysis
+
+check if we need to scale 
+```{r}
+round(apply(wisc.data,2,mean),2)
+#takes the input data and applies the function that you want.. will apply it over the columns (2) but if you want rows use 1.  difficult to read the output, so it might be useful to clean up the data by rounding the numbers
+```
+
+check standard deviation of every column
+```{r}
+round(apply(wisc.data,2,sd),2)
+```
+
+the standard deviations as well as means are very different, so the data set needs to be scaled
+
+run the principal component analysis
+```{r}
+wisc.pr<-prcomp(wisc.data,scale=TRUE)
+summary(wisc.pr)
+```
+PC1 makes up about 44% of the data -- meaning that on one axis one can represent 44% of the data o.o o.o o.o hmm
+pc2 will account for about 19% of the data
+with just a 2d plot, we would account for about 63% of the data
+
+
+time to plot the data and see how it looks
+```{r}
+biplot(wisc.pr)
+
+```
+very messy plot obtained 
+
+
+want to get a cleaner plot
+even though we are only plotting pc1 and pc2, we can say that it accounts for about 64% of all of the data in the set
+we also want to color the plot by diagnosis type
+```{r}
+plot(wisc.pr$x[,1],wisc.pr$x[,2],xlab="PC1",ylab="PC2",col=wisc.df$diagnosis)
+```
+the WIDER spread of the red points shows that there are more ways to be cancerous because it is more varied than the healthy group
+
+
+plot the proportion of variance to get the scree plot
+```{r}
+var<-wisc.pr$sdev^2
+var
+tvar<-sum(var)
+tvar
+pvar<-100*var/tvar
+pvar
+barplot(pvar)
+```
+looks like 3pc is where the elbow is 
+
+Alternative scree plot with **data driven y-axis**
+```{r}
+barplot(pvar, ylab = "Precent of Variance Explained",
+     names.arg=paste0("PC",1:length(pvar)), las=2, axes = FALSE)
+axis(2, at=pvar, labels=round(pvar,2)*100 )
+```
+
+
+### hiearchical clustering
+because hierarchical clustering does not assume the number of natural groups that exist in the data, the distance between all pairs of obesrvations must be computed
+
+scale the data
+```{r}
+data.scaled<-scale(wisc.data)
+```
+
+find the distances between all pairs
+```{r}
+data.dist<-dist(data.scaled)
+head(data.dist)
+```
+
+hclust!
+```{r}
+wisc.hclust<-hclust(data.dist, method=
+                      "complete")
+```
+plot! 
+Using the plot() and abline() functions, what is the height at which the clustering model has 4 clusters?
+
+```{r}
+plot(wisc.hclust)
+abline(h=19.5,col="red", lty=2)
+```
+
+what does he mean by target variable? is that the b/m readout
+
+cut the dendrogram
+```{r}
+wisc.hclust.clusters<-cutree(wisc.hclust,k=4)
+```
+
+Use table to compare the clusters to the diagnostics
+```{r}
+diagnosis<- wisc.df$diagnosis=="M"
+table(wisc.hclust.clusters, diagnosis)
+```
+cluster 1 largely corresponds to malignant cells while cluster 3 largely corresponds to benign cells
+
+
+Can you find a better cluster vs diagnoses match with by cutting into a different number of clusters between 2 and 10? Explore how different numbers of clusters affect the ability of the hierarchical clustering to separate the different diagnoses
+
+```{r}
+wisc.hclust5<-cutree(wisc.hclust,k=5)
+table(wisc.hclust5, diagnosis)
+
+wisc.hclust6<-cutree(wisc.hclust,k=6)
+table(wisc.hclust6, diagnosis)
+
+wisc.hclust7<-cutree(wisc.hclust,k=7)
+table(wisc.hclust7, diagnosis)
+
+wisc.hclust8<-cutree(wisc.hclust,k=8)
+table(wisc.hclust8, diagnosis)
+```
+Up until clustering by 7, the numbers stay relatively the same.  When you create 8 clusters, two prominent malignant groups emerge.  
+
+
+
+
+###k-means clustering
+Take some time to see how each clustering model performs in terms of separating the two diagnoses and how the clustering models compare to each other.
+```{r}
+wisc.km<-kmeans(data.scaled,centers=2,nstart=20)
+table(wisc.km$cluster, diagnosis)
+```
+have to make sure to call on cluster within wisc.km and not just utilize wisc.km 
+ 
+How well does k-means separate the two diagnoses? How does it compare to your hclust results?
+Overall, this method marked more as being cancerous than non cancerous.  it had the same amount of non-malignant reads in one of the clusters though.  
+
+
+
+
+
+### combining methods 
+clustering on PCA results 
+we need a distance matrix of our data -- will be clustering on only the data from the first two principle components 
+we are processing a lot of data so we will use a new method known as 
+using table will tell us how many points are in each group
+```{r}
+d<-dist(wisc.pr$x[,1:2])
+hcwc<-hclust(d,method="ward.D2")
+plot(hcwc)
+abline(40,0, col="red")
+cutwc<-cutree(hcwc,h=40)
+table(cutwc)
+```
+
+after seperating the PCA data using hiearchical clustering, plot the new PCA plot with colors 
+```{r}
+plot(wisc.pr$x[,1:2], col=cutwc)
+```
+
+but we want to know how many are benign / malignant in each of those subgroups to see if there is a trend..
+first we need to make the diagnostic data into a number vector, can do this with logicals because true is 1 and false is 0
+
+```{r}
+diagnosis<- wisc.df$diagnosis=="M"
+table(cutwc,wisc.df$diagnosis)
+table(cutwc,diagnosis)
+```
+
+3d plot - could notc complete.. could not upload rgl's dll 
+
+
+### sensitivity and specificity
+
+
+### predict
+we will use the predict function to take our PCA model from before and new cancer cell data and project that data onto our pca space
+```{r}
+url <- "https://tinyurl.com/new-samples-CSV"
+new <- read.csv(url)
+npc <- predict(wisc.pr, newdata=new)
+npc
+```
+
+now we want to plot the old pc plot with the new data
+```{r}
+plot(wisc.pr$x[,1:2], col=cutwc)
+points(npc[,1], npc[,2], col="blue", pch=16)
+```
+
+
+### optional: PCA of protein data structure
