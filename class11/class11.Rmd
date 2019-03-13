@@ -1,0 +1,163 @@
+---
+title: 'class 11: structural bioinformatics'
+author: "Ivy Fernandes"
+date: "2/15/2019"
+output: html_document
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##
+Getting the data from the PDB website
+```{r}
+library(readr)
+pdbdata <- read.csv("pdbdata.csv", row.names=1)
+head(pdbdata)
+```
+
+Determine the percentage of structures solved by X-Ray and Electron Microscopy. Also determine what proportion of structures are protein? 
+
+```{r}
+totals<-sum(pdbdata$Total)
+totals
+
+xraypercentage<-100*(pdbdata$Total[1]/totals)
+xraypercentage
+
+empercentage<-100*(pdbdata$Total[3]/totals)
+empercentage
+
+proteinpercentage<-100*(sum(pdbdata$Proteins)/totals)
+proteinpercentage
+```
+the other 7% of non-protein things in the data-base are complexed with the proteins
+
+using data pasta
+```{r}
+data.frame(stringsAsFactors=FALSE,
+   Experimental.Method = c("X-Ray", "NMR", "Electron Microscopy", "Other",
+                           "Multi Method", "Total"),
+              Proteins = c(124770, 10988, 2057, 250, 127, 138192),
+         Nucleic.Acids = c(1993, 1273, 31, 4, 5, 3306),
+    ProteinNA.Complex = c(6451, 257, 723, 6, 2, 7439),
+                 Other = c(10, 8, 0, 13, 1, 32),
+                 Total = c(133224, 12526, 2811, 273, 135, 148969)
+)
+
+```
+
+
+
+Type HIV in the PDB website search box on the home page and determine how many
+HIV-1 protease structures are in the current PDB? 
+
+2880 protien structures 
+1138 of them are proteases
+
+
+
+# Bio3d
+```{r}
+library(bio3d)
+```
+
+read the pdb file
+```{r}
+pdb<-read.pdb("1hsg")
+pdb
+```
+printing the information from the pdb will tell you the molecules in the pdb and what makes up the structure 
+
+# structure viewing
+```{r}
+# The 'devtools' package allows us to install development versions
+#install.packages("devtools")
+# Install the bio3d.view package from bitbucket
+#devtools::install_bitbucket("Grantlab/bio3d-view")
+# Load the package
+library("bio3d.view")
+# view the 3D structure
+view(pdb, "overview", col="sse")
+```
+
+extract the protein only portion of this PDB structure and write it out to a new PDB file
+
+extract the ligan (drug) - going back to section 4 of hands-on
+```{r}
+# Select all C-alpha atoms (return their indices)
+ca.inds <- atom.select(pdb, "calpha")
+ca.inds
+
+# Print details of the first few selected atoms
+head( pdb$atom[ca.inds$atom, ] )
+
+# And selected xyz coordinates
+head( pdb$xyz[, ca.inds$xyz] )
+```
+
+
+trying to select out ligand
+```{r}
+ligand.inds<-atom.select(pdb,"ligand")
+ligand.inds
+```
+
+find-grained atom selection 
+```{r}
+ligand.inds$atom
+```
+prints out a bunch of numbers, these are the indeces to get at the information within the structure
+
+```{r}
+pdb$atom
+pdb$atom[ligand.inds$atom,]
+```
+uses the indeces to get the values 
+
+trim.pdb: Produce a new smaller PDB object, containing a subset of atoms, from a given larger PDB object.
+
+we are aiming to trim down everything so that it doesnt have the water and other molecules but just the ligand
+
+```{r}
+ligand.pdb<- trim.pdb(pdb,ligand.inds)
+ligand.pdb
+```
+
+shows that there are 0 protein atoms and that the only residue is mk1
+
+```{r}
+view(ligand.pdb)
+```
+
+```{r}
+write.pdb(ligand.pdb,file="ligand.pdb")
+```
+
+
+writing the protein file only!
+```{r}
+protein.inds<-atom.select(pdb,"protein")
+protein.inds
+
+
+pdb$atom[protein.inds$atom,]
+
+protein.pdb<-trim.pdb(pdb, protein.inds)
+protein.pdb
+
+view(protein.pdb)
+```
+
+
+
+```{r}
+pdb2<-read.pdb("1HEL")
+
+#Normal Mode Analysis
+modes<-nma(pdb2)
+plot(modes)
+```
+
