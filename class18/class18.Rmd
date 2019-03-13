@@ -1,0 +1,94 @@
+---
+title: "Designing a personalized cancer vaccine"
+author: "Ivy Fernandes"
+date: "3/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Protein sequences from healthy and tumor tissue
+The following sequences resulted from such an NGS analysis of patient healthy and tumor tissue. You can also download these sequences (namedP53_wt and P53_mutant) as the following FASTA format sequence file lecture18_sequences.fa
+
+```{r}
+fastafile<-read.fasta("lecture18_sequences.fa")
+fastafile
+```
+
+seperate the healthy and the cancerous sequenes
+```{r}
+sequences<-fastafile$ali
+sequences
+healthy<-sequences[1,]
+cancer<-sequences[2,]
+healthy
+cancer
+```
+
+create a vector that determines if healthy = cancerous
+
+```{r}
+alignment<- healthy == cancer
+head(alignment)
+
+```
+
+which indices are conserved?
+```{r}
+# conserved<-conserv(fastafile)
+# conserved
+mutations<-which(alignment<1)
+```
+
+
+want to exclude gap sites because that is not a mismatch
+```{r}
+gaps<-gap.inspect(fastafile)
+gaps
+```
+
+want to identify where the mutations are within the non-gap regions
+```{r}
+mutant.sites <- mutations[mutations %in% gaps$f.inds]
+
+mutant.sites
+```
+
+```{r}
+## Make a "names" label for our output sequences (one per mutant)
+mutant.names <- paste0(fastafile$ali["P53_wt",mutant.sites],
+                       mutant.sites,
+                       fastafile$ali["P53_mutant",mutant.sites])
+
+mutant.names
+```
+
+
+```{r}
+## Sequence positions surounding each mutant site
+start.position <- mutant.sites - 8
+end.position <-  mutant.sites + 8
+
+# Blank matrix to store sub-sequences
+store.seqs <- matrix("-", nrow=length(mutant.sites), ncol=17)
+rownames(store.seqs) <- mutant.names
+
+## Extract each sub-sequence
+for(i in 1:length(mutant.sites)) {
+  store.seqs[i,] <- fastafile$ali["P53_mutant",start.position[i]:end.position[i]]
+}
+
+store.seqs
+```
+
+
+```{r}
+## First blank out the gap positions 
+store.seqs[store.seqs == "-"] <- ""
+
+## Output a FASTA file for further analysis
+write.fasta(seqs=store.seqs, ids=mutant.names, file="subsequences.fa")
+```
+

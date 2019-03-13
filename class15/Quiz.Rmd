@@ -1,0 +1,41 @@
+---
+title: "R assessment Quiz"
+author: "Ivy Fernandes"
+date: "3/1/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R assessment Quiz
+What is the minimum input required to produce a single-layer bar plot in R
+only need the height vecotr, therefore one numeric vector or matrix
+```{r}
+height<-(1:30)
+barplot(height)
+```
+
+data frame vs matrix: A data frame is more general than a matrix, in that different columns can have different modes (numeric, character, factor, etc.). ... Matrix - A matrix is a collection of data elements arranged in a two-dimensional rectangular layout. DataFrame - A dataframe is used for storing data tables.
+
+data frame vs vector: A vector has 1 dimension while a data frame has 2. ... A better question is what is the difference between a data frame and a matrix: a data frame can have different data types for each column, while a matrix is all one data type. Behind the scenes, a data frame is really a list with equal length vectors at each index.
+
+
+---
+
+jal <- function(x) {y=x^2; return(y)} #If I want to execute jal(hmk), what kind of data type can hmk be without returning an error message? Check all that apply: factor, character, numeric, logical
+Factors in R. Conceptually, factors are variables in R which take on a limited number of different values; such variables are often refered to as categorical variables. ... Factors in R are stored as a vector of integer values with a corresponding set of character values to use when the factor is displayed.x
+```{r}
+jal <- function(x) {y=x^2; return(y)} 
+```
+
+
+What is the minimum input required to produce a single-layer histogram in R
+
+```{r}
+h=rnorm(n=30)
+View(h)
+hist(h)
+```
+
