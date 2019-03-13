@@ -1,0 +1,115 @@
+---
+title: "Class 13: Genome informatics and high throughput sequencing"
+author: "Ivy Fernandes"
+date: "2/22/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+data<-read.csv("373531-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv")
+data
+```
+
+What proportion of the Mexican Ancestry in Los Angeles sample population (MXL) are homozygous for the asthma associated SNP (G|G)? 
+
+Want to look only at the second column and look for G|G
+```{r}
+homozygous_test<-data[,2]=="G|G"
+homozygous_test
+homozygous_count<-sum(homozygous_test)
+homozygous_count
+```
+
+other method
+```{r}
+genotype<-data$Genotype..forward.strand.
+table(genotype)
+```
+counts it out for you
+
+
+percentage
+```{r}
+9/nrow(data)*100
+```
+
+
+##Initial RNA-Seq analysis
+Now, you want to understand whether the SNP will affect gene expression
+HG00109 Sample
+
+```{r}
+library(seqinr) 
+library(gtools)
+chars<-s2c("DDDDCDEDCDDDDBBDDDCC@")
+#s2c takes single string and makes each letter an individual vector
+phred <-asc(chars)-33
+phred
+```
+
+## Population scale analysis
+```{r}
+populationdata<-read.table("rs8067378_ENSG00000172057.6.txt")
+head(populationdata)
+```
+```{r}
+table(populationdata$geno) # to find out how many g/g genotypes are
+```
+want to know of the 121 samples, what the medium expression of a particular gene is
+must find out where the columns / rows are g/g
+
+```{r}
+gg<-populationdata$geno== "G/G"
+gg
+
+```
+
+```{r}
+match(populationdata$geno,"G/G")
+```
+
+use the logical indeces to get the expression
+
+```{r}
+exp_gg<-populationdata[gg, "exp"]
+exp_gg
+summary(exp_gg)
+```
+
+
+what about for aa?
+```{r}
+aa<-populationdata$geno== "A/A"
+aa
+exp_aa<-populationdata[aa, "exp"]
+exp_aa
+summary(exp_aa)
+```
+
+
+what about for ag?
+```{r}
+
+ag<-populationdata$geno== "A/G"
+ag
+exp_ag<-populationdata[ag, "exp"]
+exp_ag
+summary(exp_ag)
+
+```
+
+
+Generate a boxplot with a box per genotype, what could you infer from the relative
+expression value between A/A and G/G displayed in this plot? Does the SNP effect the
+expression of ORMDL3?
+```{r}
+boxplot(exp ~ geno, data=populationdata, notch=TRUE)
+```
+
+ 
+

@@ -1,0 +1,294 @@
+---
+title: 'Class 14: Transcriptomics and the analysis of RNA-Seq data'
+author: "Ivy Fernandes"
+date: "2/26/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## upload the data
+```{r}
+counts<-read.csv("data/airway_scaledcounts.csv",stringsAsFactors = FALSE)
+metadata<-read.csv("data/airway_metadata.csv", stringsAsFactors =FALSE)
+head(counts)
+head(metadata)
+```
+
+##Toy differential gene expression
+Lets perform some exploratory differential gene expression analysis. Note: this analysis is for demonstration only. NEVER do differential expression analysis this way!
+Look at the metadata object again to see which samples are control and which are drug treated
+
+```{r}
+View(metadata)
+```
+termed control and drugged in dex column
+
+```{r}
+table(metadata$dex)
+```
+
+extract control data
+```{r}
+control <- metadata[metadata[,"dex"]=="control",] #first located the indeces where the metadata = control, then uses those indeces to extract only the information from the controls and saves it into control matrix
+```
+
+apply this control data to the count vector
+```{r}
+control.mean <- rowSums( counts[ ,control$id] )/4 #calculates the mean by using data stored in the control vector to locate information in the counts vector, want to count 
+names(control.mean) <- counts$ensgene
+```
+Q1. How would you make the above code more robust? What would happen if you were to add more samples. Would the values obtained with the excat code above be correct?
+
+I think that using the same code above would still result in the correct values even with a larger sample size, however, I think it would be harder to double check that it is correct. The reason I think that the code is already robust is because when using the information from the control matrix created to references the counts vector, it uses the control id that was extracted instead of just using indeces, so it should be calling on the right data.  I do think that the first extraction of data where everything is nested can be confusing though
+
+if by robust we mean reusable, I think that dex and control can be switched out for column and variable and then defined above so that it does not need to be changed within the code but i am not sure that would help all that much
+
+another way to make it more robust would be to use nrow to count the number of samples there are and saving it into a sample variable instead of dividing by 4 because there will not always only be 4 samples
+
+Q2. Follow the same procedure for the treated samples (i.e. calculate the mean per gene accross drug treated samples and assign to a labeled vector called treated.mean)
+
+
+```{r}
+treated.inds<-metadata[,"dex"]=="treated"
+treated.inds
+treated=metadata[treated.inds,]
+treated
+treated.mean<-rowSums(counts[,treated$id])/4
+treated.mean
+names(treated.mean)<-counts$ensgene
+#it is a bit unclear to me how the code knows to only take the names from the treated samples vs the control ones using just counts and ensgene as a reference, is it because within the names(treated.mean) there is reference to treated.mean which has information on the id for the treated samples?
+```
+
+
+Directly comparing the raw counts is going to be problematic if we just happened to sequence one group at a higher depth than another. Later on we’ll do this analysis properly, normalizing by sequencing depth per sample using a better approach. But for now, colSums() the data to show the sum of the mean counts across all genes for each group. Your answer should look like this:
+
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)#first turned data into a format that colSums can work on
+head(meancounts)
+colSums(meancounts)
+```
+
+Q3. Create a scatter plot showing the mean of the treated samples against the mean of the control samples
+
+```{r}
+plot(meancounts$treated.mean,meancounts$control.mean, xlab="Treated", ylab="Control", main="Mean Counts")
+```
+
+Wait a sec. There are 60,000-some rows in this data, but I’m only seeing a few dozen dots at most outside of the big clump around the origin. Try plotting both axes on a log scale (hint: see the help for ?plot.default to see how to set log axis.
+
+```{r}
+plot(meancounts$treated.mean,meancounts$control.mean, log="xy", xlab=" log Treated", ylab="log Control", main="Mean Counts")
+
+#why does converting to log scale help with visualization as well as data interpretation?
+```
+
+
+## Differentially Expressed Genes 
+We can find candidate differentially expressed genes by looking for genes with a large change between control and dex-treated samples. We usually look at the log2 of the fold change, because this has better mathematical properties.
+
+Here we calculate log2foldchange, add it to our meancounts data.frame and inspect the results either with the head() or the View() function for example.
+
+# ```{r}
+# foldchange<-meancounts$treated.mean/meancounts$control.mean
+# log2foldchange=log2(foldchange)
+# head(log2foldchange)
+# meancounts=c(meancounts,log2foldchange)
+# ```
+
+# ```{r}
+# head(meancounts)
+# ```
+ 
+Code above did not work and instead created a strange vector for the fold change 
+```{r}
+meancounts$log2fc<-log2(meancounts[,"treated.mean"]/meancounts[,"control.mean"])
+  #did not have to use c() to concatinate the data frame, which is useful becaues if the concatinate and overwrite was used multiple times, it could mess with the data frame and just continue to add new data to it, however, this specifically adds data to a new column of the data.frame so there is less risk of creating a messy file 
+# use meancounts[,"treated.mean"]/meancounts[,"control.mean"] *instead* of meancounts$treated.mean/meancounts$control.mean because we only want the numeric data from these datasets and not the gene names as well.  Technically the other way got the right values but did not put it into the vector correctly.
+head(meancounts)
+```
+
+There are a couple of “weird” results. Namely, the NaN (“not a number”“) and -Inf (negative infinity) results.
+
+The NaN is returned when you divide by zero and try to take the log. The -Inf is returned when you try to take the log of zero. It turns out that there are a lot of genes with zero expression. Let’s filter our data to remove these genes. Again inspect your result (and the intermediate steps) to see if things make sense to you
+
+```{r}
+# meancounts$log2fc!="NaN" & "-Inf"
+#the above code does not work because you cannot filter both at once, go back and filter from before the meancounts is stored
+
+```
+find the 0 values to prevent NaN and -Inf
+```{r}
+zeros<-which(meancounts[1:2]==0, arr.ind=TRUE)
+head(zeros) #shows the gene name and which row and column the 0 occurs 
+remove<-unique(zeros[,1]) #says to remove any duplicate genes because there might be multiple 0s within it, therefore returns row number of genes with a 0 value for expression in either treated or control and removes any duplicates
+head(remove) 
+mycounts<-meancounts[-remove,] #negative says to use all the values but the ones defined in remove dataframe
+head(mycounts)
+```
+Q4. What is the purpose of the arr.ind argument in the which() function call above? Why would we then take the first column of the output and need to call the unique() function?
+
+"which" function will give the true indices of a logical object, arr.ind says that array indices should not be returned when x is an array, saying arr.ind=TRUE will result in array indices being returned when x is an array.
+the unique function gets rid of any duplicates -- sometimes there might be a 0 expression value in both the control and the treated values.  if the function is run without the unique function nested within it then the function might run everything twice because there are at least two potential non-zero values associated with a single gene.  We also only want the row that the 0 occurs in so that we know which row to reference as an indecie when filtering our data.  
+
+##Differentially Expressed Genes
+A common threshold used for calling something differentially expressed is a log2(FoldChange) of greater than 2 or less than -2. Let’s filter the dataset both ways to see how many genes are up or down-regulated.
+```{r}
+up.ind<-mycounts$log2fc>2
+head(up.ind)
+down.ind<-mycounts$log2fc< (-2)
+head(down.ind)
+paste("Up:",sum(up.ind))
+paste("Down:",sum(down.ind))
+```
+
+
+## Annotation data
+Our mycounts result table so far only contains the Ensembl gene IDs. However, alternative gene names and extra annotation are usually required for informative for interpretation.
+
+We can add annotation from a supplied CSV file, such as those available from ENSEMBLE or UCSC. The annotables_grch38.csv annotation table links the unambiguous Ensembl gene ID to other useful annotation like the gene symbol, full gene name, location, Entrez gene ID, etc
+
+```{r}
+annotation<-read.csv("data/annotables_grch38.csv", stringsAsFactors = FALSE)
+head(annotation)
+```
+
+Ideally we want this annotation data mapped (or merged) with our mycounts data. In a previous class on writing R functions we introduced the merge() function, which is one common way to do this.
+
+```{r}
+head(mycounts)
+head(annotation)
+```
+merge: Merge two data frames by common columns or row names, or do other versions of database join operations.
+By default the data frames are merged on the columns with names they both have, but separate specifications of the columns can be given by by.x and by.y. The rows in the two data frames that match on the specified columns are extracted, and joined together. If there is more than one match, all possible matches contribute one row each. For the precise meaning of ‘match’, see match.
+
+```{r}
+mycounts$ensgene<-rownames(mycounts)
+head(mycounts)
+anno_counts<-merge(mycounts,annotation,by.x="ensgene",by.y="ensgene")
+head(anno_counts)
+```
+
+load the AnnotationDbi package and the annotation package org.Hs.eg.db.
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+mycounts$symbol <- mapIds(org.Hs.eg.db,
+                     keys=row.names(mycounts),
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+```
+
+
+Q7. Run the mapIds() function two more times to add the Entrez ID and UniProt accession as new columns called mycounts$entrez and mycounts$uniprot. The head() of your results should look like the following:
+```{r}
+mycounts$entrezid <- mapIds(org.Hs.eg.db,
+                     keys=row.names(mycounts),
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+```
+```{r}
+mycounts$uniprot <- mapIds(org.Hs.eg.db,
+                     keys=row.names(mycounts),
+                     column="UNIPROT",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+```
+
+```{r}
+head(mycounts)
+```
+
+Q8. Examine your annotated results for those genes with a log2(FoldChange) of greater than 2 (or less than -2 if you prefer) with the View() function. What do you notice? Would you trust these results? Why or why not?
+```{r}
+head(mycounts[up.ind,])
+```
+I wouldn't trust these results because you can see the very large differences in expression readings between the first read, the second, and all the following.  Some have much higher means while others have much lower or almost non existent means but because the log fold change was above 2 they are still being considered 
+
+##  DESeq2 analysis
+DESeq2 is an R package for analyzing count-based NGS data like RNA-seq. It is available from Bioconductor. Bioconductor is a project to provide tools for analyzing high-throughput genomic data including RNA-seq, ChIP-seq and arrays. 
+
+```{r}
+library(DESeq2)
+citation("DESeq2")
+```
+
+DESeq works on a particular type of object called a DESeqDataSet.
+
+You can construct a DESeqDataSet from (1) a count matrix, (2) a metadata file, and (3) a formula indicating the design of the experiment.
+
+ The third needed item that has to be specified at the beginning of the analysis is a design formula. This tells DESeq2 which columns in the sample information table (colData) specify the experimental design (i.e. which groups the samples belong to) and how these factors should be used in the analysis. Essentially, this formula expresses how the counts for each gene depend on the variables in colData.
+
+```{r}
+dds<-DESeqDataSetFromMatrix(countData=counts, colData=metadata, design=~dex, tidy=TRUE) 
+#must upload both the count data and the meta data into it as well as using design to identify the design formula --  this formula expresses how the counts for each gene depend on the variables in colData
+
+dds
+```
+
+## DESeq pipeline
+```{r}
+dds<- DESeq(dds)
+sizeFactors(dds)
+dispersions(dds)
+res<-results(dds)
+View(res)
+```
+Why do you think so many of the adjusted p-values are missing (NA)? Try looking at the baseMean column, which tells you the average overall expression of this gene, and how that relates to whether or not the p-value was missing. Go to the DESeq2 vignette and read the section about “Independent filtering and multiple testing.”
+https://www.bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#independent-filtering-and-multiple-testing
+
+The goal of independent filtering is to filter out those tests from the procedure that have no, or little chance of showing significant evidence, without even looking at their test statistic. Typically, this results in increased detection power at the same experiment-wide type I error. Here, we measure experiment-wide type I error in terms of the false discovery rate.
+
+summarize the data
+```{r}
+summary(res)
+```
+
+
+Order results table by the smallest p value:
+
+```{r}
+resOrdered <- res[order(res$pvalue),]
+#order function orders the information in the specified set of information
+```
+
+
+
+The results function contains a number of arguments to customize the results table. By default the argument alpha is set to 0.1. If the adjusted p value cutoff will be a value other than 0.1, alpha should be set to that value:
+
+More generic way to access the actual subset of the data.frame passing a threshold like this is with the subset() function, e.g.:
+
+```{r}
+resSig05 <- subset(as.data.frame(res), padj < 0.05)
+nrow(resSig05)
+```
+
+Q9. How many are significant with an adjusted p-value < 0.05? How about 0.01? Save this last set of results as resSig01.
+
+```{r}
+resSig01 <- subset(as.data.frame(res), padj < 0.01)
+nrow(resSig01)
+```
+
+Q10. Using either the previously generated anno object (annotations from the file  annotables_grch38.csv file) or the mapIds() function (from the AnnotationDbi package) add annotation to your res01 results data.frame.
+
+```{r}
+# mycounts$resSig01<- mapIds(org.Hs.eg.db,
+#                      keys=row.names(resSig01),
+#                      column="SYMBOL",
+#                      keytype="ENSEMBL",
+#                      multiVals="first")
+
+```
+
+could not get it to work because : Error in `$<-.data.frame`(`*tmp*`, resSig01, value = c(ENSG00000002834 = "LASP1", : replacement has 1437 rows, data has 21817
+
+## Data Visualization
+
+Plotting counts
+DESeq2 offers a function called plotCounts() that takes a DESeqDataSet that has been run through the pipeline, the name of a gene, and the name of the variable in the colData that you’re interested in, and plots those values. See the help for ?plotCounts. Let’s first see what the gene ID is for the CRISPLD2 gene using:
