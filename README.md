@@ -1,6 +1,6 @@
 # BGGN213 Winter 2019 Classwork
 
-This is a collection of my work from [BGGN213 at UCSD] (https://bioboot.github.io/bggn213_W19/)
+This is a collection of my work from [BGGN213 at UCSD](https://bioboot.github.io/bggn213_W19/)
 
 ## Contents
 - Class04 : [Introduction to R] 
@@ -14,5 +14,6 @@ This is a collection of my work from [BGGN213 at UCSD] (https://bioboot.github.i
 - Class12 : [Bioinformatics in Drug Discovery and Design](https://github.com/ivyfernandes/bggn213/blob/master/class12/class12.md)
 - Class13: [Genome Informatics and High Throughput Screening](https://github.com/ivyfernandes/bggn213/blob/master/class13/class13.md)
 - Class14 : [Transcriptomics](https://raw.githubusercontent.com/ivyfernandes/bggn213/master/class14/class14.md)
+- Class 18 : [Designing a personalized cancer vaccine](https://github.com/ivyfernandes/bggn213/blob/master/class18/class18.md)
 
 
